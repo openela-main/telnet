@@ -1,0 +1,54 @@
+--- a/telnet/commands.c.old
++++ b/telnet/commands.c
+@@ -2181,12 +2181,13 @@ cmdrc(char *m1, char *m2)
+     int gotmachine = 0;
+     int l1 = strlen(m1);
+     int l2 = strlen(m2);
+-    char m1save[MAXHOSTNAMELEN];
++    char m1save[MAXHOSTNAMELEN+1];
+ 
+     if (skiprc)
+ 	return;
+ 
+     strncpy(m1save, m1, sizeof(m1save));
++    m1save[MAXHOSTNAMELEN] = 0;
+     m1 = m1save;
+ 
+     if (rcname[0] == 0) {
+@@ -2218,11 +2218,11 @@ cmdrc(char *m1, char *m2)
+ 	    if (isspace(line[0]))
+ 		continue;
+ 	    if (strncasecmp(line, m1, l1) == 0)
+-		strncpy(line, &line[l1], sizeof(line) - l1);
++		memmove(line, &line[l1], sizeof(line) - l1);
+ 	    else if (strncasecmp(line, m2, l2) == 0)
+-		strncpy(line, &line[l2], sizeof(line) - l2);
++		memmove(line, &line[l2], sizeof(line) - l2);
+ 	    else if (strncasecmp(line, "DEFAULT", 7) == 0)
+-		strncpy(line, &line[7], sizeof(line) - 7);
++		memmove(line, &line[7], sizeof(line) - 7);
+ 	    else
+ 		continue;
+ 	    if (line[0] != ' ' && line[0] != '\t' && line[0] != '\n')
+@@ -2345,6 +2345,7 @@ tn(int argc, char *argv[])
+ 	}
+     usage:
+ 	printf("usage: %s [-l user] [-a] host-name [port]\r\n", cmd);
++    free(user);
+ 	return 0;
+     }
+     if (hostp == 0)
+--- a/telnetd/utility.c
++++ b/telnetd/utility.c
+@@ -68,8 +68,10 @@ output_data(const char *format, ...)
+ 	char *buf;
+ 
+ 	va_start(args, format);
+-	if ((len = vasprintf(&buf, format, args)) == -1)
++	if ((len = vasprintf(&buf, format, args)) == -1) {
++		va_end(args);
+ 		return -1;
++	}
+ 	output_datalen(buf, len);
+ 	va_end(args);
+ 	free(buf);
