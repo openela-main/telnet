@@ -1,0 +1,15 @@
+diff --git a/telnet/sys_bsd.c.old b/telnet/sys_bsd.c
+index 9e05171..39845ac 100644
+--- a/telnet/sys_bsd.c.old
++++ b/telnet/sys_bsd.c
+@@ -833,6 +833,10 @@ NetSetPgrp(int fd)
+     void
+ deadpeer(int sig)
+ {
++    if(sig == SIGPIPE) {
++	    signal(SIGPIPE, SIG_DFL);
++       fprintf(stderr, "Broken pipe\n");
++    }
+     (void)sig;
+     setcommandmode();
+     siglongjmp(peerdied, -1);
